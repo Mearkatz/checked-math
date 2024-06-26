@@ -1,0 +1,22 @@
+[package]
+name = "checked-math"
+version = "0.1.0"
+edition = "2021"
+authors = [
+    "Mearkatz <drquinsey@gmail.com>",
+]
+description = "wrapper types for less verbose fallible math"
+license = "MIT"
+
+[lints.rust]
+unsafe_code = { level = "deny", priority = -1 }
+
+[lints.clippy]
+enum_glob_use = { level = "deny", priority = -2 }
+pedantic = { level = "deny", priority = -3 }
+nursery = { level = "deny", priority = -4 }
+unwrap_used = { level = "deny", priority = -5 }
+expect_used = { level = "deny", priority = -6 }
+
+[dependencies]
+num = "0.4.3"
