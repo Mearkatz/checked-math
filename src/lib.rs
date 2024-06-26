@@ -9,14 +9,9 @@
 ///
 /// assert_eq!((x + y + z), Checked::new(None)); // Overflow prevented :)
 /// ```
+#[derive(Debug, Clone, Copy)]
 pub struct Checked<T> {
     pub data: Option<T>,
-}
-
-impl<T> From<T> for Checked<T> {
-    fn from(value: T) -> Self {
-        Self::new(Some(value))
-    }
 }
 
 impl<T> Checked<T> {
@@ -37,6 +32,12 @@ impl<T> Checked<T> {
         } else {
             Self::new(None)
         }
+    }
+}
+
+impl<T> From<T> for Checked<T> {
+    fn from(value: T) -> Self {
+        Self::new(Some(value))
     }
 }
 
