@@ -1,43 +1,40 @@
+use std::ops::{Add, Div, Mul, Rem, Sub};
+
+use num::{traits::CheckedRem, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
+
 #[allow(dead_code)]
 /// A wrapper type where all operations that would normally be unchecked are checked.
 /// # Examples
-/// ```rust
-/// use checked_math::Checked;
-/// let x: Checked<u8> = 1u8.into();
-/// let y: Checked<u8> = 1u8.into();
-/// let z: Checked<u8> = 255u8.into();
-///
-/// assert_eq!((x + y + z), Checked::new(None)); // Overflow prevented :)
 /// ```
+/// # use checked_math::Checked;
+/// assert_eq!(Checked::from(255u8) + Checked::from(1u8), Checked(None));
+/// assert_eq!(Checked::from(255u8) - Checked::from(1u8), Checked(Some(254u8)));
+/// ```
+#[must_use]
 #[derive(Debug, Clone, Copy)]
-pub struct Checked<T> {
-    pub data: Option<T>,
-}
+pub struct Checked<T>(pub Option<T>);
 
 impl<T> Checked<T> {
-    /// Constructs a new `Checked` with some initial value
-    #[must_use]
-    pub const fn new(data: Option<T>) -> Self {
-        Self { data }
-    }
-
-    /// Calls an infix function on each of the inner values of two `Checked<T>`s
-    #[must_use]
-    pub fn fallible_inner_infix<F>(self, rhs: Self, f: F) -> Self
+    /// Calls an infix function on each of the inner values of two `Checked<T>`s        
+    fn infix<F, U>(self, rhs: Self, f: F) -> Checked<U>
     where
-        F: Fn(T, T) -> Option<T>,
+        F: Fn(T, T) -> Option<U>,
     {
-        if let (Some(x), Some(y)) = (self.data, rhs.data) {
-            Self::new(f(x, y))
-        } else {
-            Self::new(None)
+        match (self.0, rhs.0) {
+            (Some(x), Some(y)) => Checked(f(x, y)),
+            _ => Checked(None),
         }
     }
 }
 
 impl<T> From<T> for Checked<T> {
     fn from(value: T) -> Self {
-        Self::new(Some(value))
+        Self(Some(value))
+    }
+}
+impl<T> From<Option<T>> for Checked<T> {
+    fn from(value: Option<T>) -> Self {
+        Self(value)
     }
 }
 
@@ -46,7 +43,7 @@ where
     T: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.data == other.data
+        self.0 == other.0
     }
 }
 
@@ -57,61 +54,61 @@ where
     T: PartialOrd,
 {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.data.partial_cmp(&other.data)
+        self.0.partial_cmp(&other.0)
     }
 }
 
-impl<T> std::ops::Add for Checked<T>
+impl<T> Add for Checked<T>
 where
-    T: num::CheckedAdd,
+    T: CheckedAdd,
 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        self.fallible_inner_infix(rhs, |a: T, b: T| a.checked_add(&b))
+        self.infix(rhs, |a: T, b: T| a.checked_add(&b))
     }
 }
 
-impl<T> std::ops::Sub for Checked<T>
+impl<T> Sub for Checked<T>
 where
-    T: num::CheckedSub,
+    T: CheckedSub,
 {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        self.fallible_inner_infix(rhs, |a: T, b: T| a.checked_sub(&b))
+        self.infix(rhs, |a: T, b: T| a.checked_sub(&b))
     }
 }
 
-impl<T> std::ops::Mul for Checked<T>
+impl<T> Mul for Checked<T>
 where
-    T: num::CheckedMul,
+    T: CheckedMul,
 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.fallible_inner_infix(rhs, |a: T, b: T| a.checked_mul(&b))
+        self.infix(rhs, |a: T, b: T| a.checked_mul(&b))
     }
 }
 
-impl<T> std::ops::Div for Checked<T>
+impl<T> Div for Checked<T>
 where
-    T: num::CheckedDiv,
+    T: CheckedDiv,
 {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
-        self.fallible_inner_infix(rhs, |a: T, b: T| a.checked_div(&b))
+        self.infix(rhs, |a: T, b: T| a.checked_div(&b))
     }
 }
 
-impl<T> std::ops::Rem for Checked<T>
+impl<T> Rem for Checked<T>
 where
-    T: num::traits::CheckedRem,
+    T: CheckedRem,
 {
     type Output = Self;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        self.fallible_inner_infix(rhs, |a: T, b: T| a.checked_rem(&b))
+        self.infix(rhs, |a: T, b: T| a.checked_rem(&b))
     }
 }
